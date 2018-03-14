@@ -6,22 +6,22 @@
   <script type="text/javascript" src="playlistmixer.js"></script>
 
   <script type="text/javascript">
-    
+
     /** The categories to choose from */
     var categories = { // TODO Create GUI
       Bugg: true,
       Fox: true
     };
-    
+
     /** The cycle of categories before starting over again */
     var cycle = ["Bugg", "Bugg", "Fox", "Fox"]; // TODO Create UI
-    
+
     /** IDs of the tracks to play when switching category. Could be a pause or some indicator. TODO Example data */
     var tracksBetweenCategories = []; // TODO Create GUI
-    
+
     /** Tracks to play before starting over with a new cycle. Could be a silent pause or some indicator to switch partner. TODO Example data */
     var tracksBetweenCycles = [Tracks.SILENCE_17s]; // TODO Create GUI
-    
+
     // ----------------------------------------------------------
 
     /** Tracks loaded into each category */
@@ -42,25 +42,42 @@
         $('#loggedIn').hide();
       }
     });
-    
+
     function initializeCategories() {
-      $('#category'); // TODO Add options
+      $.each(categories, function(key, value) {
+        $('#category').append($("<option></option>")
+            .attr("value", key)
+            .text(key));
+      });
     }
-    
+
     function addTracksFromPlaylist() {
+      // TODO Add from provided URL to provided category
+      
       // TODO Remove adding of test data
-      mixer.appendTracksOfCategoryFromPlaylist("Bugg", "mattiasj78", "6lIfmLTd4BRjrqWYjVKEwA");
-      mixer.appendTracksOfCategoryFromPlaylist("Fox", "mattiasj78", "4zzs5Px2dNbt9gOCg2lZU8");
-      mixer.appendTracksOfCategoryFromPlaylist("Fox", "mattiasj78", "09NNLPLDSoqcHVHOwcB58r");
+      mixer.appendTracksOfCategoryFromPlaylistUrl("Bugg", "spotify:user:mattiasj78:playlist:6lIfmLTd4BRjrqWYjVKEwA", populateListBoxes);
+      mixer.appendTracksOfCategoryFromPlaylistUrl("Fox", "https://open.spotify.com/user/mattiasj78/playlist/4zzs5Px2dNbt9gOCg2lZU8", populateListBoxes);
+      mixer.appendTracksOfCategoryFromPlaylistUrl("Fox", "https://open.spotify.com/user/mattiasj78/playlist/09NNLPLDSoqcHVHOwcB58r", populateListBoxes);
     }
     
+    function addTracksToListbox(listboxId, tracks) {
+      console.log("Adding " + tracks.length + " track(s) to " + listboxId);
+      var listbox = $('#' + listboxId);
+      $('option',  listboxId).remove();
+      $.each(tracks, function(index, track) {
+        console.log("Adding track to " + listboxId + ": " + track.id + " " + track.name); // JSON.stringify(track)
+        listbox.append($("<option />")
+            .attr("value", track.id)
+            .text(track.name));
+      });
+    }
+    
+    function populateListBoxes() {
+      addTracksToListbox("buggTracks", mixer.getTracksOfCategory("Bugg"));
+      addTracksToListbox("foxTracks", mixer.getTracksOfCategory("Fox"));
+    }
+
     function mergeTracks() {
-      // TODO Remove
-      console.log("Playlist from URL: " + getUserFromPlaylistUrl("https://open.spotify.com/user/mattiasj78/playlist/1Ore0n999pudUnnAgu3DwW?si=hKU4D0oVTjGbGbKMa0Wkgg"));
-      console.log("Playlist from URI: " + getUserFromPlaylistUrl("spotify:user:mattiasj78:playlist:1Ore0n999pudUnnAgu3DwW"));
-      console.log("User from URL: " + getPlaylistFromPlaylistUrl("https://open.spotify.com/user/mattiasj78/playlist/1Ore0n999pudUnnAgu3DwW?si=hKU4D0oVTjGbGbKMa0Wkgg"));
-      console.log("User from URI: " + getPlaylistFromPlaylistUrl("spotify:user:mattiasj78:playlist:1Ore0n999pudUnnAgu3DwW"));
-      
       mixer.mix(cycle, tracksBetweenCategories, tracksBetweenCycles);
     }
   </script>
@@ -77,7 +94,7 @@
 <p id="loggedIn">
   <div>
     <select id="category">
-      
+
     </select>
     <!-- TODO Remove example value -->
     <input type="text" id="playlist_uri" value="https://open.spotify.com/user/mattiasj78/playlist/1Ore0n999pudUnnAgu3DwW"/>
@@ -88,8 +105,33 @@
   </p>
 
   <!-- TODO boxes with tracks added for each category-->
-  <!-- TODO box with result ->
+  <!-- TODO box with result -->
   <!-- TODO Button to save generated playlist -->
+</p>
+<p>
+<table>
+  <!-- TODO Build dynamically -->
+  <tr>
+    <th>Bugg</th>
+    <th>Fox</th>
+  </tr>
+  <tr>
+    <td>
+      <select id="buggTracks" size="20"></select>
+    </td>
+    <td>
+      <select id="foxTracks" size="20"></select>
+    </td>
+  </tr>
+  <tr>
+    <th colspan="2">Result</th>
+  </tr>
+  <tr>
+    <th colspan="2">
+      <select id="result" size="20"></select>
+    </th>
+  </tr>
+</table>
 </p>
 </body>
 </html>

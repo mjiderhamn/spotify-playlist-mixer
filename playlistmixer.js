@@ -41,17 +41,28 @@ function Mixer() {
   this.tracksPerCategory = {};
 }
 
-// TODO Make URL/URI the parameter
-Mixer.prototype.appendTracksOfCategoryFromPlaylist = function(category, userId, playlistId) {
+/** Add tracks from given playlist URL or URI */
+Mixer.prototype.appendTracksOfCategoryFromPlaylistUrl = function(category, urlOrUri, callback) {
+  var userId = getUserFromPlaylistUrl(urlOrUri);
+  var playlistId = getPlaylistFromPlaylistUrl(urlOrUri);
+  this.appendTracksOfCategoryFromPlaylist(category, userId, playlistId, callback);
+};
+
+Mixer.prototype.appendTracksOfCategoryFromPlaylist = function(category, userId, playlistId, callback) {
+  var tracksOfCategory = this.getTracksOfCategory(category);
+  this.appendTracksFromPlaylist(tracksOfCategory, userId, playlistId, callback);
+};
+
+Mixer.prototype.getTracksOfCategory = function(category) {
   var tracksOfCategory = this.tracksPerCategory[category];
   if(! tracksOfCategory) {
     tracksOfCategory = [];
     this.tracksPerCategory[category] = tracksOfCategory;
   }
-  this.appendTracksFromPlaylist(tracksOfCategory, userId, playlistId);
+  return tracksOfCategory;
 };
 
-Mixer.prototype.appendTracksFromPlaylist = function(tracks, userId, playlistId) {
+Mixer.prototype.appendTracksFromPlaylist = function(tracks, userId, playlistId, callback) {
   spotifyApi.getPlaylist(userId, playlistId, null, function(xhr, playlist) {
     if(xhr) {
       var error = JSON.parse(xhr.response).error;
@@ -62,10 +73,12 @@ Mixer.prototype.appendTracksFromPlaylist = function(tracks, userId, playlistId) 
       // console.log("Total tracks before: " + tracks.length);
       console.log("Playlist " + playlist.id + " @ " + playlist.href + " contains " + playlist.tracks.total + " tracks");
       // TODO Handle > 100 tracks playlist.tracks.href, playlist.tracks.limit, playlist.tracks.next, playlist.tracks.offset
-      // var tracks = playlist.tracks.items;
-      // Array.prototype.push(tracks, playlist.tracks.items);
-      tracks.push.apply(tracks, playlist.tracks.items);
+      $(playlist.tracks.items).each(function(index, playlistTrack) {
+        tracks.push(playlistTrack.track);
+      });
       console.log("Total tracks after: " + tracks.length);
+      if(callback)
+        callback.call();
     }
     else
       alert("Unknown error"); // TODO
@@ -93,12 +106,12 @@ Mixer.prototype.mix = function(cycle, tracksBetweenCategories, tracksBetweenCycl
 /** Get user ID given a playlist URL or URI */
 function getUserFromPlaylistUrl(urlOrUri) {
   return urlOrUri.replace(/:/g, '/') // URI -> URL-ish
-      .replace(/.*playlist\//, '')
-      .replace(/\?.*/, ''); // Remove any parameters
+      .replace(/.*user\//, '').replace(/\/playlist.*/, '');
 }
 
 /** Get playlist ID given a playlist URL or URI */
 function getPlaylistFromPlaylistUrl(urlOrUri) {
   return urlOrUri.replace(/:/g, '/') // URI -> URL-ish
-      .replace(/.*user\//, '').replace(/\/playlist.*/, '');
+      .replace(/.*playlist\//, '')
+      .replace(/\?.*/, ''); // Remove any parameters
 }
