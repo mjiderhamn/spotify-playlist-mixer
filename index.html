@@ -1,0 +1,95 @@
+<html>
+<head>
+  <!-- Documentation https://doxdox.org/jmperez/spotify-web-api-js -->
+  <script type="text/javascript" src="https://cdn.rawgit.com/JMPerez/spotify-web-api-js/53f7cec142f06a71f7a9ca55eb572ed1a67b1566/src/spotify-web-api.js"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <script type="text/javascript" src="playlistmixer.js"></script>
+
+  <script type="text/javascript">
+    
+    /** The categories to choose from */
+    var categories = { // TODO Create GUI
+      Bugg: true,
+      Fox: true
+    };
+    
+    /** The cycle of categories before starting over again */
+    var cycle = ["Bugg", "Bugg", "Fox", "Fox"]; // TODO Create UI
+    
+    /** IDs of the tracks to play when switching category. Could be a pause or some indicator. TODO Example data */
+    var tracksBetweenCategories = []; // TODO Create GUI
+    
+    /** Tracks to play before starting over with a new cycle. Could be a silent pause or some indicator to switch partner. TODO Example data */
+    var tracksBetweenCycles = [Tracks.SILENCE_17s]; // TODO Create GUI
+    
+    // ----------------------------------------------------------
+
+    /** Tracks loaded into each category */
+    var mixer = new Mixer();
+
+    $(document).ready(function () {
+      var params = parseParams();
+      // TODO handle 'error'
+      if('access_token' in params) {
+        accessToken = params['access_token'];
+        console.log("accessToken: " + accessToken);
+        spotifyApi.setAccessToken(accessToken);
+        $('#login').hide();
+        initializeCategories();
+      }
+      else {
+        $('#login').show();
+        $('#loggedIn').hide();
+      }
+    });
+    
+    function initializeCategories() {
+      $('#category'); // TODO Add options
+    }
+    
+    function addTracksFromPlaylist() {
+      // TODO Remove adding of test data
+      mixer.appendTracksOfCategoryFromPlaylist("Bugg", "mattiasj78", "6lIfmLTd4BRjrqWYjVKEwA");
+      mixer.appendTracksOfCategoryFromPlaylist("Fox", "mattiasj78", "4zzs5Px2dNbt9gOCg2lZU8");
+      mixer.appendTracksOfCategoryFromPlaylist("Fox", "mattiasj78", "09NNLPLDSoqcHVHOwcB58r");
+    }
+    
+    function mergeTracks() {
+      // TODO Remove
+      console.log("Playlist from URL: " + getUserFromPlaylistUrl("https://open.spotify.com/user/mattiasj78/playlist/1Ore0n999pudUnnAgu3DwW?si=hKU4D0oVTjGbGbKMa0Wkgg"));
+      console.log("Playlist from URI: " + getUserFromPlaylistUrl("spotify:user:mattiasj78:playlist:1Ore0n999pudUnnAgu3DwW"));
+      console.log("User from URL: " + getPlaylistFromPlaylistUrl("https://open.spotify.com/user/mattiasj78/playlist/1Ore0n999pudUnnAgu3DwW?si=hKU4D0oVTjGbGbKMa0Wkgg"));
+      console.log("User from URI: " + getPlaylistFromPlaylistUrl("spotify:user:mattiasj78:playlist:1Ore0n999pudUnnAgu3DwW"));
+      
+      mixer.mix(cycle, tracksBetweenCategories, tracksBetweenCycles);
+    }
+  </script>
+</head>
+<body>
+
+<h1>Playlist mixer</h1>
+
+<!-- TODO Link to http://sortyourmusic.playlistmachinery.com/ for splitting playlist by BPM -->
+
+<p id="login">
+  <input type="button" value="Log in" onclick="login()"/>
+</p>
+<p id="loggedIn">
+  <div>
+    <select id="category">
+      
+    </select>
+    <!-- TODO Remove example value -->
+    <input type="text" id="playlist_uri" value="https://open.spotify.com/user/mattiasj78/playlist/1Ore0n999pudUnnAgu3DwW"/>
+  </div>
+  <p>
+    <input type="button" value="Add tracks" onclick="addTracksFromPlaylist()"/>
+    <input type="button" value="Merge" onclick="mergeTracks()"/>
+  </p>
+
+  <!-- TODO boxes with tracks added for each category-->
+  <!-- TODO box with result ->
+  <!-- TODO Button to save generated playlist -->
+</p>
+</body>
+</html>
