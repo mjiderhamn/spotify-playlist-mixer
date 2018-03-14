@@ -39,6 +39,7 @@ function login() {
 function Mixer() {
   /** Tracks loaded into each category */
   this.tracksPerCategory = {};
+  this.trackCache = {};
 }
 
 /** Add tracks from given playlist URL or URI */
@@ -95,14 +96,17 @@ Mixer.prototype.mix = function(cycle, tracksBetweenCategories, tracksBetweenCycl
   for(category in this.tracksPerCategory) {
     temp[category] = this.tracksPerCategory[category].slice(0); // Copy
   }
-
+  
   while(true) {
     var previousCategory = null;
 
     // $(cycle).each(function (index, category) { // Does not support break
     for(var c = 0; c < cycle.length; c++) {
       var category = cycle[c];
-      // TODO Between categories track
+      if(tracksBetweenCategories && previousCategory && previousCategory !== category) {
+        console.log("Category switching from '" + previousCategory + "' to '" + category + "'");
+        this.insertTrack(result, tracksBetweenCategories);
+      }
       previousCategory = category;
       
       var tracksOfCategory = temp[category];
@@ -119,7 +123,41 @@ Mixer.prototype.mix = function(cycle, tracksBetweenCategories, tracksBetweenCycl
       tracksOfCategory.splice(trackNo, 1); // Removes the track
     }
     
-    // TODO Between cycles track
+    if(tracksBetweenCycles) {
+      console.log("Starting cycle over again");
+      this.insertTrack(result, tracksBetweenCycles);
+    }
+  }
+  
+  // TODO Dump remaining no of tracks. NOTE "return" above!
+};
+
+Mixer.prototype.insertTrack = function(result, tracksToInsert) {
+  for(var t = 0; t < tracksToInsert.length; t++) {
+    var trackId = tracksToInsert[t];
+    console.log("Inserting track " + trackId);
+    var placeholder = {};
+    placeholder.id = trackId;
+    placeholder.mixerCategory = "Inserted"; // TODO Make this a parameter
+    result.push(placeholder);
+    this.getTrack(trackId, function (track) {
+      console.log("Track fetched: " + JSON.stringify(track));
+      $.extend(placeholder, track);
+    });
+  }
+};
+
+// TODO Fix asynchronousness of this! Fetch and cache all tracks before user opts to merge?
+Mixer.prototype.getTrack = function(idOrUrl, callback) {
+  // TODO Extract ID from URL
+  var self = this;
+  if(this.trackCache[idOrUrl]) {
+  }
+  else {
+    this.trackCache[idOrUrl] = spotifyApi.getTrack(idOrUrl, function (xhr, track) {
+      self.trackCache[idOrUrl] = track;
+      callback(track);
+    });
   }
 };
 
