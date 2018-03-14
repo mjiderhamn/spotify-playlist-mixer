@@ -68,7 +68,7 @@
         console.log("Adding track to " + listboxId + ": " + track.id + " " + track.name); // JSON.stringify(track)
         listbox.append($("<option />")
             .attr("value", track.id)
-            .text(track.name));
+            .text(track.name + (track.mixerCategory ? (" (" + track.mixerCategory + ')') : '')));
       });
     }
     
@@ -79,6 +79,7 @@
 
     function mergeTracks() {
       mixer.mix(cycle, tracksBetweenCategories, tracksBetweenCycles);
+      addTracksToListbox("result", mixer.result);
     }
   </script>
 </head>

@@ -86,12 +86,40 @@ Mixer.prototype.appendTracksFromPlaylist = function(tracks, userId, playlistId, 
 };
 
 Mixer.prototype.mix = function(cycle, tracksBetweenCategories, tracksBetweenCycles) {
-  var result = [];
+  this.result = [];
+  var result = this.result;
+  
+  // Make copies of the categories
+  var temp = {};
+  // $(this.tracksPerCategory).each(function (category, tracks) {
+  for(category in this.tracksPerCategory) {
+    temp[category] = this.tracksPerCategory[category].slice(0); // Copy
+  }
 
   while(true) {
     var previousCategory = null;
+
+    // $(cycle).each(function (index, category) { // Does not support break
+    for(var c = 0; c < cycle.length; c++) {
+      var category = cycle[c];
+      // TODO Between categories track
+      previousCategory = category;
+      
+      var tracksOfCategory = temp[category];
+      var noOfTracks = tracksOfCategory ? tracksOfCategory.length : 0;
+      if(noOfTracks == 0) {
+        console.log("No more tracks of category " + category);
+        return; // TODO need to throw?
+      }
+      var trackNo = Math.floor(Math.random() * (noOfTracks - 1));
+      var track = tracksOfCategory[trackNo];
+      track.mixerCategory = category;
+      console.log("Adding track of category " + category + " to result: " + track.name);
+      result.push(track);
+      tracksOfCategory.splice(trackNo, 1); // Removes the track
+    }
     
-    // TODO
+    // TODO Between cycles track
   }
 };
 
