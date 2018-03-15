@@ -8,6 +8,9 @@ var Tracks = {
   SILENCE_30s: "3E3Kz6ZrphV9lRKhQjZAkl"
 };
 
+/** No of tracks to add to a playlist at a time, due to https://github.com/thelinmichael/spotify-web-api-node/issues/82 */
+var TRACKS_PER_BATCH = 50;
+
 var accessToken = null;
 var spotifyApi = new SpotifyWebApi();
 
@@ -206,6 +209,54 @@ Mixer.prototype.getTrack = function(idOrUrl, callback) {
     });
   }
 };
+
+Mixer.prototype.saveResult = function () {
+  if(! this.result || this.result.length == 0) {
+    alert("Nothing to save!");
+    return;
+  }
+
+  var self = this;
+  
+  spotifyApi.getMe(null, function (xhr, me) {
+    // console.log("Me: " + JSON.stringify(me));
+    var userId = me.id;
+    console.log("Saving playlist with " + self.result.length + " tracks to user " + userId);
+    spotifyApi.createPlaylist(userId, {
+        name: "Playlist mixer" // TODO
+      }, function (xhr, playlist) {
+      var playlistId = playlist.id;
+      console.log("Playlist created: " + playlistId);
+
+      // Cannot do all at once https://github.com/thelinmichael/spotify-web-api-node/issues/82
+      var slices = [];
+      var sliceIndex = 0;
+      var sliceStart = 0;
+      do {
+        slices[sliceIndex++] = self.result.slice(sliceStart, sliceStart + TRACKS_PER_BATCH);
+        sliceStart += TRACKS_PER_BATCH;
+      } while(sliceStart < self.result.length);
+
+      console.log("Saving tracks in " + slices.length + " slices");
+      saveSlice(userId, playlistId, slices, 0);
+    });
+  })
+};
+
+function saveSlice(userId, playlistId, slices, sliceIndex) {
+  var slice = slices[sliceIndex];
+  var uris = [];
+  for(var i = 0; i < slice.length; i++) {
+    uris[i] = slice[i].uri;
+  }
+  console.log("Adding slice " + sliceIndex + " containing " + JSON.stringify(uris));
+  
+  spotifyApi.addTracksToPlaylist(userId, playlistId, uris, null, function (xhr, body) {
+    if(sliceIndex < slices.length - 1) {
+      saveSlice(userId, playlistId, slices, sliceIndex + 1); // Next slice
+    }
+  })
+}
 
 // ===========================================================================0
 // URL / URI manipulation
