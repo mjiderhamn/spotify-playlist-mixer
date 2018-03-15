@@ -147,6 +147,7 @@ Mixer.prototype.mix = function(cycle) {
 /** NOTE! tracksPerCategory will be mutated! */
 Mixer.prototype.mixUntilTracksMissing = function(cycle, tracksPerCategory) {
   this.result = [];
+  this.cycle = cycle; // Remember the cycle used to create the mix
   var result = this.result;
 
   while(true) {
@@ -215,6 +216,14 @@ Mixer.prototype.saveResult = function () {
     alert("Nothing to save!");
     return;
   }
+  
+  var name = "";
+  for(var i = 0; i < this.cycle.length; i++) {
+    name += this.cycle[i];
+    if(i < this.cycle.length - 1)
+      name += ", ";
+  }
+  name += " @ " + new Date().toString(); // toISOString() ?
 
   var self = this;
   
@@ -223,7 +232,7 @@ Mixer.prototype.saveResult = function () {
     var userId = me.id;
     console.log("Saving playlist with " + self.result.length + " tracks to user " + userId);
     spotifyApi.createPlaylist(userId, {
-        name: "Playlist mixer" // TODO
+        name: name
       }, function (xhr, playlist) {
       var playlistId = playlist.id;
       console.log("Playlist created: " + playlistId);
@@ -241,6 +250,8 @@ Mixer.prototype.saveResult = function () {
       saveSlice(userId, playlistId, slices, 0);
     });
   })
+  
+  return name;
 };
 
 function saveSlice(userId, playlistId, slices, sliceIndex) {
