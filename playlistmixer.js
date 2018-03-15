@@ -106,7 +106,7 @@ Mixer.prototype.addTrackBetweenCycles = function(trackIdOrUrl, callback) {
 };
 
 Mixer.prototype.addTrackToArray = function(tracks, trackIdOrUrl, fakeCategory, callback) {
-  // TODO Extract ID from track URL if needed
+  trackIdOrUrl = getTrackId(trackIdOrUrl);
   console.log("Inserting track " + trackIdOrUrl);
   var placeholder = {};
   placeholder.id = trackIdOrUrl;
@@ -167,7 +167,7 @@ Mixer.prototype.mixUntilTracksMissing = function(cycle, tracksPerCategory) {
       var noOfTracks = tracksOfCategory ? tracksOfCategory.length : 0;
       if(noOfTracks == 0) {
         console.log("No more tracks of category " + category);
-        return; // TODO need to throw?
+        return;
       }
       var trackNo = Math.floor(Math.random() * (noOfTracks - 1));
       var track = tracksOfCategory[trackNo];
@@ -197,15 +197,16 @@ Mixer.prototype.insertTrack = function(result, category, tracksToInsert) {
   }
 };
 
-Mixer.prototype.getTrack = function(idOrUrl, callback) {
-  // TODO Extract ID from URL
+Mixer.prototype.getTrack = function(idOrUrlOrUri, callback) {
+  var trackId = getTrackId(idOrUrlOrUri); // Extract ID from URL or URI
   var self = this;
-  if(this.trackCache[idOrUrl]) {
+  if(this.trackCache[trackId]) {
+    callback(this.trackCache[trackId]);
   }
   else {
-    this.trackCache[idOrUrl] = spotifyApi.getTrack(idOrUrl, function (xhr, track) {
+    this.trackCache[trackId] = spotifyApi.getTrack(trackId, function (xhr, track) {
       console.log("Track fetched: " + JSON.stringify(track));
-      self.trackCache[idOrUrl] = track;
+      self.trackCache[trackId] = track;
       callback(track);
     });
   }
@@ -288,4 +289,14 @@ function getPlaylistFromPlaylistUrl(urlOrUri) {
   return urlOrUri.replace(/:/g, '/') // URI -> URL-ish
       .replace(/.*playlist\//, '')
       .replace(/\?.*/, ''); // Remove any parameters
+}
+
+/** Get playlist ID given a playlist URL or URI */
+function getTrackId(idOrUrlOrUri) {
+  idOrUrlOrUri = idOrUrlOrUri.replace(/:/g, '/'); // URI -> URL-ish
+  if(idOrUrlOrUri.indexOf('/') > 0) { // Was URL or URI
+    return idOrUrlOrUri.replace(/.*track\//, '');
+  }
+  else // ID only
+    return idOrUrlOrUri;
 }
