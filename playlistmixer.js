@@ -172,7 +172,7 @@ Mixer.prototype.mixUntilTracksMissing = function(cycle, tracksPerCategory) {
     for(var c = 0; c < cycle.length; c++) {
       var category = cycle[c];
       if(this.tracksBetweenCategories && previousCategory && previousCategory !== category) {
-        var categorySwitch = "'" + previousCategory + "' -> '" + category + "'"; 
+        var categorySwitch = previousCategory + " -> " + category; 
         console.log("Category switching " + categorySwitch);
         this.insertTrack(result, categorySwitch, this.tracksBetweenCategories);
       }

@@ -104,6 +104,50 @@
       // duration.as("hh:mm:ss"); ?
     }
 
+    function updateBetweenCategoriesListbox() {
+      addTracksToListbox("betweenCategories", mixer.tracksBetweenCategories);
+    }
+
+    function updateBetweenCyclesListbox() {
+      addTracksToListbox("betweenCycles", mixer.tracksBetweenCycles);
+    }
+
+    function addBetweenCategoriesTrackFromInput() {
+      var uri = $('#between_categories_uri').val();
+      mixer.addTrackBetweenCategories(uri, function () {
+        updateBetweenCategoriesListbox();
+      });
+    }
+
+    function addBetweenCyclesTrackFromInput() {
+      var uri = $('#between_cycles_uri').val();
+      mixer.addTrackBetweenCycles(uri, function () {
+        updateBetweenCyclesListbox();
+      });
+    }
+
+    function addBetweenCategoriesTrack(uri) {
+      mixer.addTrackBetweenCategories(uri, function () {
+        updateBetweenCategoriesListbox();
+      });
+    }
+
+    function addBetweenCyclesTrack(uri) {
+      mixer.addTrackBetweenCycles(uri, function () {
+        updateBetweenCyclesListbox();
+      });
+    }
+
+    function clearBetweenCategoriesTracks() {
+      mixer.tracksBetweenCategories = [];
+      updateBetweenCategoriesListbox();
+    }
+
+    function clearBetweenCyclesTracks() {
+      mixer.tracksBetweenCycles = [];
+      updateBetweenCyclesListbox();
+    }
+
     function mergeTracks() {
       mixer.mix(cycle);
       addTracksToListbox("result", mixer.result);
@@ -153,7 +197,7 @@ If you need to sort your source playlists by BPM (Beats Per Minute), you can use
 </p>
 <div id="loggedIn">
   <div>
-    <h2>1. Add playlists</h2>
+    <h2>1<a href="javascript:mattiasTestData()">.</a> Add playlists</h2>
     Add playlists of different categories that you want mixed.
     You can see the tracks added into each category below.
     <br />
@@ -162,16 +206,80 @@ If you need to sort your source playlists by BPM (Beats Per Minute), you can use
     </select>
     <input type="text" id="playlist_uri" placeholder="Playlist URL or URI" size="50" />
     <input type="button" value="Add tracks" onclick="addTracksFromPlaylist()"/>
-  </div>
-  <p>
-    <a href="javascript:mattiasTestData()">Mattias test-data</a>
-  </p>
 
-  <h2>2. Mix</h2>
-  <p>
-    Click <input type="button" value="Mix!" onclick="mergeTracks()"/> to have the playlists randomly mixed.
-    Check the results below.
-  </p>
+    <!-- TODO Build dynamically -->
+    <table>
+      <tr>
+        <th id="buggHeading">Bugg</th>
+        <th id="foxHeading">Fox</th>
+      </tr>
+      <tr>
+        <td>
+          <select id="buggTracks" size="20"></select>
+        </td>
+        <td>
+          <select id="foxTracks" size="20"></select>
+        </td>
+      </tr>
+    </table>  
+  </div>
+  
+  <div>
+    <h2>2. Configure your mix</h2>
+    <p>
+      Configure any tracks (silence or sounds?) you want to be played between songs, either when switching from one
+      category of music to another, or when starting the cycle over again.
+    </p>
+
+    <table>
+      <tr>
+        <th>Between categories</th>
+        <th>Between cycles</th>
+      </tr>
+      <tr>
+        <td>
+          <select id="betweenCategories" size="3"></select>
+        </td>
+        <td>
+          <select id="betweenCycles" size="3"></select>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <input type="text" id="between_categories_uri" placeholder="Track URL or URI" size="50" />
+          <input type="button" value="Add track" onclick="addBetweenCategoriesTrackFromInput()"/>
+        </td>
+        <td>
+          <input type="text" id="between_cycles_uri" placeholder="Track URL or URI" size="50" />
+          <input type="button" value="Add track" onclick="addBetweenCyclesTrackFromInput()"/>
+        </td>
+      </tr>
+      <tr>
+        <td><input type="button" value="Clear" onclick="clearBetweenCategoriesTracks()"/></td>
+        <td><input type="button" value="Clear" onclick="clearBetweenCyclesTracks()"/></td>
+      </tr>
+    </table>
+  </div>
+  
+  <div>
+    <h2>3. Mix</h2>
+    <p>
+      Click <input type="button" value="Mix!" onclick="mergeTracks()"/> to have the playlists randomly mixed.
+      Check the results below.
+    </p>
+
+    <table>
+      <tr>
+        <th colspan="2" id="resultHeading">Result</th>
+      </tr>
+      <tr>
+        <th colspan="2">
+          <select id="result" size="20"></select>
+        </th>
+      </tr>
+    </table>
+  </div>
+    
 
   <h2>3. Save</h2>
   <p>
@@ -182,45 +290,6 @@ If you need to sort your source playlists by BPM (Beats Per Minute), you can use
 </div>
 <hr />
 <p>
-<table>
-  <tr>
-    <th>Between categories</th>
-    <th>Between cycles</th>
-  </tr>
-  <tr>
-    <td>Tracks played when switching from one category to another</td>
-    <td>Tracks played before starting the cycle of categories over again</td>
-  </tr>
-  <tr>
-    <td>
-      <select id="betweenCategories" size="3"></select>
-    </td>
-    <td>
-      <select id="betweenCycles" size="3"></select>
-    </td>
-  </tr>
-  <!-- TODO Build dynamically -->
-  <tr>
-    <th id="buggHeading">Bugg</th>
-    <th id="foxHeading">Fox</th>
-  </tr>
-  <tr>
-    <td>
-      <select id="buggTracks" size="20"></select>
-    </td>
-    <td>
-      <select id="foxTracks" size="20"></select>
-    </td>
-  </tr>
-  <tr>
-    <th colspan="2" id="resultHeading">Result</th>
-  </tr>
-  <tr>
-    <th colspan="2">
-      <select id="result" size="20"></select>
-    </th>
-  </tr>
-</table>
 </p>
 </body>
 </html>
