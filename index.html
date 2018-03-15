@@ -18,10 +18,6 @@
     /** The cycle of categories before starting over again */
     var cycle = ["Bugg", "Bugg", "Fox", "Fox"]; // TODO Create UI
 
-    // TODO Create GUI for mixer.tracksBetweenCategories = IDs of the tracks to play when switching category. Could be a pause or some indicator. 
-
-    // TODO Create GUI for mixer.tracksBetweenCycles = Tracks to play before starting over with a new cycle. Could be a silent pause or some indicator to switch partner.
-
     // ----------------------------------------------------------
 
     /** Tracks loaded into each category */
@@ -37,8 +33,7 @@
         $('#login').hide();
         initializeCategories();
 
-        // TODO Defaults?
-        // mixer.addTrackBetweenCategories(); // TODO Test data + callback
+        // Some defaults
         mixer.addTrackBetweenCycles(Tracks.SILENCE_17s, function () {
           addTracksToListbox("betweenCycles", mixer.tracksBetweenCycles);
         });
@@ -55,11 +50,8 @@
             .attr("value", key)
             .text(key));
       });
-      // TODO Between categories
-      // TODO Between cycles
     }
 
-    // TODO Remove adding of test data
     function mattiasTestData() {
       mixer.appendTracksOfCategoryFromPlaylistUrl("Bugg", "spotify:user:mattiasj78:playlist:6lIfmLTd4BRjrqWYjVKEwA", populateListBoxes);
       mixer.appendTracksOfCategoryFromPlaylistUrl("Fox", "https://open.spotify.com/user/mattiasj78/playlist/4zzs5Px2dNbt9gOCg2lZU8", populateListBoxes);
@@ -69,7 +61,6 @@
     function addTracksFromPlaylist() {
       var category = $('#category').val();
       var uri = $('#playlist_uri').val();
-      // TODO Add from provided URL to provided category
       
       mixer.appendTracksOfCategoryFromPlaylistUrl(category, uri, populateListBoxes);
       
@@ -255,6 +246,18 @@ If you need to sort your source playlists by BPM (Beats Per Minute), you can use
         </td>
       </tr>
       <tr>
+        <td>
+          <input type="button" value="10 s silence" onclick="addBetweenCategoriesTrack(Tracks.SILENCE_10s)"/>
+          <input type="button" value="17 s silence" onclick="addBetweenCategoriesTrack(Tracks.SILENCE_17s)"/>
+          <input type="button" value="30 s silence" onclick="addBetweenCategoriesTrack(Tracks.SILENCE_30s)"/>
+        </td>
+        <td>
+          <input type="button" value="10 s silence" onclick="addBetweenCyclesTrack(Tracks.SILENCE_10s)"/>
+          <input type="button" value="17 s silence" onclick="addBetweenCyclesTrack(Tracks.SILENCE_17s)"/>
+          <input type="button" value="30 s silence" onclick="addBetweenCyclesTrack(Tracks.SILENCE_30s)"/>
+        </td>
+      </tr>
+      <tr>
         <td><input type="button" value="Clear" onclick="clearBetweenCategoriesTracks()"/></td>
         <td><input type="button" value="Clear" onclick="clearBetweenCyclesTracks()"/></td>
       </tr>
@@ -281,7 +284,7 @@ If you need to sort your source playlists by BPM (Beats Per Minute), you can use
   </div>
     
 
-  <h2>3. Save</h2>
+  <h2>4. Save</h2>
   <p>
     Click <input type="button" value="Save to new playlist" onclick="alert('New playlist: ' + mixer.saveResult($('#playlist_name').val()))"/>
     to save the mix playlist to your Spotify account.<br />
