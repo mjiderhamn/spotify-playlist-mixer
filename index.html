@@ -16,11 +16,9 @@
     /** The cycle of categories before starting over again */
     var cycle = ["Bugg", "Bugg", "Fox", "Fox"]; // TODO Create UI
 
-    /** IDs of the tracks to play when switching category. Could be a pause or some indicator. TODO Example data */
-    var tracksBetweenCategories = []; // TODO Create GUI
+    // TODO Create GUI for mixer.tracksBetweenCategories = IDs of the tracks to play when switching category. Could be a pause or some indicator. 
 
-    /** Tracks to play before starting over with a new cycle. Could be a silent pause or some indicator to switch partner. TODO Example data */
-    var tracksBetweenCycles = [Tracks.SILENCE_17s]; // TODO Create GUI
+    // TODO Create GUI for mixer.tracksBetweenCycles = Tracks to play before starting over with a new cycle. Could be a silent pause or some indicator to switch partner.
 
     // ----------------------------------------------------------
 
@@ -49,15 +47,25 @@
             .attr("value", key)
             .text(key));
       });
+      // TODO Between categories
+    }
+
+    // TODO Remove adding of test data
+    function mattiasTestData() {
+      mixer.appendTracksOfCategoryFromPlaylistUrl("Bugg", "spotify:user:mattiasj78:playlist:6lIfmLTd4BRjrqWYjVKEwA", populateListBoxes);
+      mixer.appendTracksOfCategoryFromPlaylistUrl("Fox", "https://open.spotify.com/user/mattiasj78/playlist/4zzs5Px2dNbt9gOCg2lZU8", populateListBoxes);
+      mixer.appendTracksOfCategoryFromPlaylistUrl("Fox", "https://open.spotify.com/user/mattiasj78/playlist/09NNLPLDSoqcHVHOwcB58r", populateListBoxes);
+
+      // mixer.addTrackBetweenCategories(); // TODO Test data + callback
+      mixer.addTrackBetweenCycles(Tracks.SILENCE_17s, function () {
+        addTracksToListbox("betweenCycles", mixer.tracksBetweenCycles);
+      });
     }
 
     function addTracksFromPlaylist() {
       // TODO Add from provided URL to provided category
       
-      // TODO Remove adding of test data
-      mixer.appendTracksOfCategoryFromPlaylistUrl("Bugg", "spotify:user:mattiasj78:playlist:6lIfmLTd4BRjrqWYjVKEwA", populateListBoxes);
-      mixer.appendTracksOfCategoryFromPlaylistUrl("Fox", "https://open.spotify.com/user/mattiasj78/playlist/4zzs5Px2dNbt9gOCg2lZU8", populateListBoxes);
-      mixer.appendTracksOfCategoryFromPlaylistUrl("Fox", "https://open.spotify.com/user/mattiasj78/playlist/09NNLPLDSoqcHVHOwcB58r", populateListBoxes);
+      mattiasTestData();
     }
     
     function addTracksToListbox(listboxId, tracks) {
@@ -65,7 +73,7 @@
       var listbox = $('#' + listboxId);
       $('option',  listboxId).remove();
       $.each(tracks, function(index, track) {
-        console.log("Adding track to " + listboxId + ": " + track.id + " " + track.name); // JSON.stringify(track)
+        console.log("  Adding track to " + listboxId + ": " + track.id + " " + track.name); // JSON.stringify(track)
         listbox.append($("<option />")
             .attr("value", track.id)
             .text(track.name + (track.mixerCategory ? (" (" + track.mixerCategory + ')') : '')));
@@ -78,7 +86,7 @@
     }
 
     function mergeTracks() {
-      mixer.mix(cycle, tracksBetweenCategories, tracksBetweenCycles);
+      mixer.mix(cycle);
       addTracksToListbox("result", mixer.result);
     }
   </script>
@@ -105,12 +113,22 @@
     <input type="button" value="Merge" onclick="mergeTracks()"/>
   </p>
 
-  <!-- TODO boxes with tracks added for each category-->
-  <!-- TODO box with result -->
-  <!-- TODO Button to save generated playlist -->
+  <!-- TODO Button to save generated playlist. Name input. -->
 </p>
 <p>
 <table>
+  <tr>
+    <th>Between categories</th>
+    <th>Between cycles</th>
+  </tr>
+  <tr>
+    <td>
+      <select id="betweenCategories" size="3"></select>
+    </td>
+    <td>
+      <select id="betweenCycles" size="3"></select>
+    </td>
+  </tr>
   <!-- TODO Build dynamically -->
   <tr>
     <th>Bugg</th>

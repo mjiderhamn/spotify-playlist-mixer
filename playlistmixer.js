@@ -39,7 +39,15 @@ function login() {
 function Mixer() {
   /** Tracks loaded into each category */
   this.tracksPerCategory = {};
+  
+  /** Cache of tracks by track ID */
   this.trackCache = {};
+
+  /** IDs of the tracks to play when switching category. Could be a pause or some indicator. */
+  this.tracksBetweenCategories = [];
+
+  /** Tracks to play before starting over with a new cycle. Could be a silent pause or some indicator to switch partner. */
+  this.tracksBetweenCycles = [];
 }
 
 /** Add tracks from given playlist URL or URI */
@@ -86,10 +94,31 @@ Mixer.prototype.appendTracksFromPlaylist = function(tracks, userId, playlistId, 
   });
 };
 
-Mixer.prototype.mix = function(cycle, tracksBetweenCategories, tracksBetweenCycles) {
-  this.result = [];
-  var result = this.result;
-  
+Mixer.prototype.addTrackBetweenCategories = function(trackIdOrUrl, callback) {
+  this.addTrackToArray(this.tracksBetweenCategories, trackIdOrUrl, "Category change", callback);
+};
+
+Mixer.prototype.addTrackBetweenCycles = function(trackIdOrUrl, callback) {
+  this.addTrackToArray(this.tracksBetweenCycles, trackIdOrUrl, "Category change", callback);
+};
+
+Mixer.prototype.addTrackToArray = function(tracks, trackIdOrUrl, fakeCategory, callback) {
+  // TODO Extract ID from track URL if needed
+  console.log("Inserting track " + trackIdOrUrl);
+  var placeholder = {};
+  placeholder.id = trackIdOrUrl;
+  placeholder.name = "*fetching*";
+  placeholder.mixerCategory = fakeCategory;
+  tracks.push(placeholder);
+  this.getTrack(trackIdOrUrl, function (track) {
+    $.extend(placeholder, track);
+    if(callback)
+      callback.call();
+  });
+};
+
+Mixer.prototype.mix = function(cycle) {
+ 
   // Make copies of the categories
   var temp = {};
   // $(this.tracksPerCategory).each(function (category, tracks) {
@@ -97,19 +126,40 @@ Mixer.prototype.mix = function(cycle, tracksBetweenCategories, tracksBetweenCycl
     temp[category] = this.tracksPerCategory[category].slice(0); // Copy
   }
   
+  this.mixUntilTracksMissing(cycle, temp);
+  
+  for(category in temp) {
+    var remainingTracksInCategory = temp[category];
+    if(remainingTracksInCategory && remainingTracksInCategory.length > 0) {
+      console.log("Unused tracks of category '" + category + "' (" + remainingTracksInCategory.length + "):");
+      for(var i = 0; i < remainingTracksInCategory.length; i++) {
+        console.log("  " + remainingTracksInCategory[i].name);
+      }
+    }
+    else
+      console.log("All tracks in category '" + category + "' were used");
+  }
+};
+
+/** NOTE! tracksPerCategory will be mutated! */
+Mixer.prototype.mixUntilTracksMissing = function(cycle, tracksPerCategory) {
+  this.result = [];
+  var result = this.result;
+
   while(true) {
     var previousCategory = null;
 
     // $(cycle).each(function (index, category) { // Does not support break
     for(var c = 0; c < cycle.length; c++) {
       var category = cycle[c];
-      if(tracksBetweenCategories && previousCategory && previousCategory !== category) {
-        console.log("Category switching from '" + previousCategory + "' to '" + category + "'");
-        this.insertTrack(result, tracksBetweenCategories);
+      if(this.tracksBetweenCategories && previousCategory && previousCategory !== category) {
+        var categorySwitch = "'" + previousCategory + "' -> '" + category + "'"; 
+        console.log("Category switching " + categorySwitch);
+        this.insertTrack(result, categorySwitch, this.tracksBetweenCategories);
       }
       previousCategory = category;
       
-      var tracksOfCategory = temp[category];
+      var tracksOfCategory = tracksPerCategory[category];
       var noOfTracks = tracksOfCategory ? tracksOfCategory.length : 0;
       if(noOfTracks == 0) {
         console.log("No more tracks of category " + category);
@@ -123,31 +173,26 @@ Mixer.prototype.mix = function(cycle, tracksBetweenCategories, tracksBetweenCycl
       tracksOfCategory.splice(trackNo, 1); // Removes the track
     }
     
-    if(tracksBetweenCycles) {
+    if(this.tracksBetweenCycles) {
       console.log("Starting cycle over again");
-      this.insertTrack(result, tracksBetweenCycles);
+      this.insertTrack(result, "Cycle repeat", this.tracksBetweenCycles);
     }
   }
-  
-  // TODO Dump remaining no of tracks. NOTE "return" above!
 };
 
-Mixer.prototype.insertTrack = function(result, tracksToInsert) {
+Mixer.prototype.insertTrack = function(result, category, tracksToInsert) {
   for(var t = 0; t < tracksToInsert.length; t++) {
-    var trackId = tracksToInsert[t];
-    console.log("Inserting track " + trackId);
-    var placeholder = {};
-    placeholder.id = trackId;
-    placeholder.mixerCategory = "Inserted"; // TODO Make this a parameter
-    result.push(placeholder);
-    this.getTrack(trackId, function (track) {
-      console.log("Track fetched: " + JSON.stringify(track));
-      $.extend(placeholder, track);
-    });
+    var track = tracksToInsert[t];
+    console.log("Inserting track " + track.id + " '" + track.name + "'");
+    if(track) {
+      track.mixerCategory = category;
+      result.push(track);
+    }
+    else
+      console.error("Track not in cache: " + trackId);
   }
 };
 
-// TODO Fix asynchronousness of this! Fetch and cache all tracks before user opts to merge?
 Mixer.prototype.getTrack = function(idOrUrl, callback) {
   // TODO Extract ID from URL
   var self = this;
@@ -155,6 +200,7 @@ Mixer.prototype.getTrack = function(idOrUrl, callback) {
   }
   else {
     this.trackCache[idOrUrl] = spotifyApi.getTrack(idOrUrl, function (xhr, track) {
+      console.log("Track fetched: " + JSON.stringify(track));
       self.trackCache[idOrUrl] = track;
       callback(track);
     });
