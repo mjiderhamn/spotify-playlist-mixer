@@ -63,8 +63,11 @@
       var uri = $('#playlist_uri').val();
       
       mixer.appendTracksOfCategoryFromPlaylistUrl(category, uri, populateListBoxes);
-      
-      // mattiasTestData();
+    }
+    
+    function clearCategoryTracks(category) {
+      mixer.clearTracksOfCategory(category);
+      populateListBoxes();
     }
     
     function addTracksToListbox(listboxId, tracks) {
@@ -211,6 +214,10 @@ If you need to sort your source playlists by BPM (Beats Per Minute), you can use
         <td>
           <select id="foxTracks" size="20"></select>
         </td>
+      </tr>
+      <tr>
+        <td><input type="button" value="Clear" onclick="clearCategoryTracks('Bugg')"/></td>
+        <td><input type="button" value="Clear" onclick="clearCategoryTracks('Fox')"/></td>
       </tr>
     </table>  
   </div>

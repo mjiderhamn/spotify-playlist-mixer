@@ -74,6 +74,10 @@ Mixer.prototype.getTracksOfCategory = function(category) {
   return tracksOfCategory;
 };
 
+Mixer.prototype.clearTracksOfCategory = function(category) {
+  this.tracksPerCategory[category] = [];
+};
+
 Mixer.prototype.getTotalTimeOfCategory = function(category) {
   return this.getTotalTime(this.getTracksOfCategory(category));
 };
