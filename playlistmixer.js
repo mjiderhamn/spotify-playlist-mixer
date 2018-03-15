@@ -212,12 +212,7 @@ Mixer.prototype.getTrack = function(idOrUrlOrUri, callback) {
   }
 };
 
-Mixer.prototype.saveResult = function () {
-  if(! this.result || this.result.length == 0) {
-    alert("Nothing to save!");
-    return;
-  }
-  
+Mixer.prototype.generateName = function (cycle) {
   var name = "";
   for(var i = 0; i < this.cycle.length; i++) {
     name += this.cycle[i];
@@ -225,7 +220,15 @@ Mixer.prototype.saveResult = function () {
       name += ", ";
   }
   name += " @ " + new Date().toString(); // toISOString() ?
+  return name;
+};
 
+Mixer.prototype.saveResult = function (name) {
+  if(! this.result || this.result.length == 0) {
+    alert("Nothing to save!");
+    return;
+  }
+  
   var self = this;
   
   spotifyApi.getMe(null, function (xhr, me) {
@@ -250,7 +253,7 @@ Mixer.prototype.saveResult = function () {
       console.log("Saving tracks in " + slices.length + " slices");
       saveSlice(userId, playlistId, slices, 0);
     });
-  })
+  });
   
   return name;
 };

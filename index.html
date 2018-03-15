@@ -4,6 +4,7 @@
   <script type="text/javascript" src="https://cdn.rawgit.com/JMPerez/spotify-web-api-js/53f7cec142f06a71f7a9ca55eb572ed1a67b1566/src/spotify-web-api.js"></script>
   <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
   <script type="text/javascript" src="playlistmixer.js"></script>
+  <title>Spotify Playlist Mixer</title>
 
   <script type="text/javascript">
 
@@ -94,13 +95,16 @@
     function mergeTracks() {
       mixer.mix(cycle);
       addTracksToListbox("result", mixer.result);
+      var name = mixer.generateName(cycle);
+      $('#playlist_name').val(name);
+
       // TODO Display information about unused tracks
     }
   </script>
 </head>
 <body>
 
-<h1>Playlist mixer</h1>
+<h1>Spotify Playlist Mixer</h1>
 
 Using this playlist mixer, you can mix Spotify playlists of different categories according to your needs.
 If you need to sort your source playlists by BPM (Beats Per Minute), you can use 
@@ -109,7 +113,7 @@ If you need to sort your source playlists by BPM (Beats Per Minute), you can use
 <p id="login">
   <input type="button" value="Log in" onclick="login()"/>
 </p>
-<p id="loggedIn">
+<div id="loggedIn">
   <div>
     <h2>1. Add playlists</h2>
     Add playlists of different categories that you want mixed.
@@ -124,20 +128,20 @@ If you need to sort your source playlists by BPM (Beats Per Minute), you can use
   <p>
     <a href="javascript:mattiasTestData()">Mattias test-data</a>
   </p>
+
+  <h2>2. Mix</h2>
   <p>
-    <h2>2. Mix</h2>
     Click <input type="button" value="Mix!" onclick="mergeTracks()"/> to have the playlists randomly mixed.
     Check the results below.
   </p>
 
+  <h2>3. Save</h2>
   <p>
-    <h2>3. Save</h2>
-    Click <input type="button" value="Save to new playlist" onclick="alert('New playlist: ' + mixer.saveResult())"/>
-    to save the mix playlist to your Spotify account.
+    Click <input type="button" value="Save to new playlist" onclick="alert('New playlist: ' + mixer.saveResult($('#playlist_name').val()))"/>
+    to save the mix playlist to your Spotify account.<br />
+    Name of new playlist: <input id="playlist_name" placeholder="Name of new playlist" size="100"/>
   </p>
-
-  <!-- TODO Button to save generated playlist. Name input. -->
-</p>
+</div>
 <hr />
 <p>
 <table>
