@@ -34,6 +34,12 @@
         spotifyApi.setAccessToken(accessToken);
         $('#login').hide();
         initializeCategories();
+
+        // TODO Defaults?
+        // mixer.addTrackBetweenCategories(); // TODO Test data + callback
+        mixer.addTrackBetweenCycles(Tracks.SILENCE_17s, function () {
+          addTracksToListbox("betweenCycles", mixer.tracksBetweenCycles);
+        });
       }
       else {
         $('#login').show();
@@ -55,17 +61,16 @@
       mixer.appendTracksOfCategoryFromPlaylistUrl("Bugg", "spotify:user:mattiasj78:playlist:6lIfmLTd4BRjrqWYjVKEwA", populateListBoxes);
       mixer.appendTracksOfCategoryFromPlaylistUrl("Fox", "https://open.spotify.com/user/mattiasj78/playlist/4zzs5Px2dNbt9gOCg2lZU8", populateListBoxes);
       mixer.appendTracksOfCategoryFromPlaylistUrl("Fox", "https://open.spotify.com/user/mattiasj78/playlist/09NNLPLDSoqcHVHOwcB58r", populateListBoxes);
-
-      // mixer.addTrackBetweenCategories(); // TODO Test data + callback
-      mixer.addTrackBetweenCycles(Tracks.SILENCE_17s, function () {
-        addTracksToListbox("betweenCycles", mixer.tracksBetweenCycles);
-      });
     }
 
     function addTracksFromPlaylist() {
+      var category = $('#category').val();
+      var uri = $('#playlist_uri').val();
       // TODO Add from provided URL to provided category
       
-      mattiasTestData();
+      mixer.appendTracksOfCategoryFromPlaylistUrl(category, uri, populateListBoxes);
+      
+      // mattiasTestData();
     }
     
     function addTracksToListbox(listboxId, tracks) {
@@ -81,6 +86,7 @@
     }
     
     function populateListBoxes() {
+      // TODO Display total no of tracks
       addTracksToListbox("buggTracks", mixer.getTracksOfCategory("Bugg"));
       addTracksToListbox("foxTracks", mixer.getTracksOfCategory("Fox"));
     }
@@ -88,6 +94,7 @@
     function mergeTracks() {
       mixer.mix(cycle);
       addTracksToListbox("result", mixer.result);
+      // TODO Display information about unused tracks
     }
   </script>
 </head>
@@ -95,27 +102,43 @@
 
 <h1>Playlist mixer</h1>
 
-<!-- TODO Link to http://sortyourmusic.playlistmachinery.com/ for splitting playlist by BPM -->
+Using this playlist mixer, you can mix Spotify playlists of different categories according to your needs.
+If you need to sort your source playlists by BPM (Beats Per Minute), you can use 
+<a href="http://sortyourmusic.playlistmachinery.com/">Sort Your Music</a>.
 
 <p id="login">
   <input type="button" value="Log in" onclick="login()"/>
 </p>
 <p id="loggedIn">
   <div>
+    <h2>1. Add playlists</h2>
+    Add playlists of different categories that you want mixed.
+    You can see the tracks added into each category below.
+    <br />
     <select id="category">
 
     </select>
-    <!-- TODO Remove example value -->
-    <input type="text" id="playlist_uri" value="https://open.spotify.com/user/mattiasj78/playlist/1Ore0n999pudUnnAgu3DwW"/>
+    <input type="text" id="playlist_uri" placeholder="Playlist URL or URI"/>
+    <input type="button" value="Add tracks" onclick="addTracksFromPlaylist()"/>
   </div>
   <p>
-    <input type="button" value="Add tracks" onclick="addTracksFromPlaylist()"/>
-    <input type="button" value="Merge" onclick="mergeTracks()"/>
-    <input type="button" value="Save" onclick="alert('New playlist: ' + mixer.saveResult())"/>
+    <a href="javascript:mattiasTestData()">Mattias test-data</a>
+  </p>
+  <p>
+    <h2>2. Mix</h2>
+    Click <input type="button" value="Mix!" onclick="mergeTracks()"/> to have the playlists randomly mixed.
+    Check the results below.
+  </p>
+
+  <p>
+    <h2>3. Save</h2>
+    Click <input type="button" value="Save to new playlist" onclick="alert('New playlist: ' + mixer.saveResult())"/>
+    to save the mix playlist to your Spotify account.
   </p>
 
   <!-- TODO Button to save generated playlist. Name input. -->
 </p>
+<hr />
 <p>
 <table>
   <tr>
