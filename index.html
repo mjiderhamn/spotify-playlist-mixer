@@ -3,6 +3,7 @@
   <!-- Documentation https://doxdox.org/jmperez/spotify-web-api-js -->
   <script type="text/javascript" src="https://cdn.rawgit.com/JMPerez/spotify-web-api-js/53f7cec142f06a71f7a9ca55eb572ed1a67b1566/src/spotify-web-api.js"></script>
   <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.21.0/moment.js" integrity="sha256-9wM2SPsbZp8aQ0KHzSeg+KsAYGtc7GRTombqhhXvLSg=" crossorigin="anonymous"></script>
   <script type="text/javascript" src="playlistmixer.js"></script>
   <title>Spotify Playlist Mixer</title>
 
@@ -88,14 +89,26 @@
     }
     
     function populateListBoxes() {
-      // TODO Display total no of tracks
       addTracksToListbox("buggTracks", mixer.getTracksOfCategory("Bugg"));
       addTracksToListbox("foxTracks", mixer.getTracksOfCategory("Fox"));
+      var totalBuggTime = mixer.getTotalTimeOfCategory("Bugg");
+      var totalFoxTime = mixer.getTotalTimeOfCategory("Fox");
+      $('#buggHeading').text("Bugg (" + mixer.getTracksOfCategory("Bugg").length + " tracks, " + formatMilliseconds(totalBuggTime) + ")");
+      $('#foxHeading').text("Fox (" + mixer.getTracksOfCategory("Fox").length + " tracks, " + formatMilliseconds(totalFoxTime) + ")")
+    }
+    
+    function formatMilliseconds(ms) {
+      var duration = moment.duration(ms);
+      return duration.hours() + " h " + duration.minutes() + " m " + duration.seconds() + " s";
+      // duration.humanize(); ?
+      // duration.as("hh:mm:ss"); ?
     }
 
     function mergeTracks() {
       mixer.mix(cycle);
       addTracksToListbox("result", mixer.result);
+      $('#resultHeading').text("Result (" + mixer.result.length + " tracks, " + formatMilliseconds(mixer.getTotalTime(mixer.result)) + ")")
+      
       var name = mixer.generateName(cycle);
       $('#playlist_name').val(name);
 
@@ -188,8 +201,8 @@ If you need to sort your source playlists by BPM (Beats Per Minute), you can use
   </tr>
   <!-- TODO Build dynamically -->
   <tr>
-    <th>Bugg</th>
-    <th>Fox</th>
+    <th id="buggHeading">Bugg</th>
+    <th id="foxHeading">Fox</th>
   </tr>
   <tr>
     <td>
@@ -200,7 +213,7 @@ If you need to sort your source playlists by BPM (Beats Per Minute), you can use
     </td>
   </tr>
   <tr>
-    <th colspan="2">Result</th>
+    <th colspan="2" id="resultHeading">Result</th>
   </tr>
   <tr>
     <th colspan="2">

@@ -1,7 +1,7 @@
 var SPOTIFY_CLIENT_ID = "9f2f7495b9d74d8b805c3ce656967c2e";
 
 var Tracks = {
-  SILENCE_10s: "5XSKC4d0y0DfcGbvDOiL93",
+  SILENCE_10s: "5XSKC4d0y0DfcGbvDOiL93", // Alt 5XSKC4d0y0DfcGbvDOiL93
   
   SILENCE_17s: "4ZZgjJUKOG0DarLHTmPnP8",
   
@@ -74,6 +74,21 @@ Mixer.prototype.getTracksOfCategory = function(category) {
   return tracksOfCategory;
 };
 
+Mixer.prototype.getTotalTimeOfCategory = function(category) {
+  return this.getTotalTime(this.getTracksOfCategory(category));
+};
+
+/** Get total time of tracks in milliseoconds */
+Mixer.prototype.getTotalTime = function(tracks) {
+  var ms = 0;
+  if(tracks) {
+    for(var i = 0; i < tracks.length; i++) {
+      ms += tracks[i].duration_ms
+    }
+  }
+  return ms;
+};
+
 Mixer.prototype.appendTracksFromPlaylist = function(tracks, userId, playlistId, callback) {
   spotifyApi.getPlaylist(userId, playlistId, null, function(xhr, playlist) {
     if(xhr) {
@@ -98,20 +113,20 @@ Mixer.prototype.appendTracksFromPlaylist = function(tracks, userId, playlistId, 
 };
 
 Mixer.prototype.addTrackBetweenCategories = function(trackIdOrUrl, callback) {
-  this.addTrackToArray(this.tracksBetweenCategories, trackIdOrUrl, "Category change", callback);
+  this.addTrackToArray(this.tracksBetweenCategories, trackIdOrUrl, callback);
 };
 
 Mixer.prototype.addTrackBetweenCycles = function(trackIdOrUrl, callback) {
-  this.addTrackToArray(this.tracksBetweenCycles, trackIdOrUrl, "Category change", callback);
+  this.addTrackToArray(this.tracksBetweenCycles, trackIdOrUrl, callback);
 };
 
-Mixer.prototype.addTrackToArray = function(tracks, trackIdOrUrl, fakeCategory, callback) {
+Mixer.prototype.addTrackToArray = function(tracks, trackIdOrUrl, callback) {
   trackIdOrUrl = getTrackId(trackIdOrUrl);
   console.log("Inserting track " + trackIdOrUrl);
   var placeholder = {};
   placeholder.id = trackIdOrUrl;
   placeholder.name = "*fetching*";
-  placeholder.mixerCategory = fakeCategory;
+  // placeholder.mixerCategory = fakeCategory;
   tracks.push(placeholder);
   this.getTrack(trackIdOrUrl, function (track) {
     $.extend(placeholder, track);
