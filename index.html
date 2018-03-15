@@ -109,6 +109,17 @@
       background: #1ed760; /* Spotify green */
       font-family: Circular,Helvetica,Arial,sans-serif;
     }
+    
+    select {
+      width: 300px;
+    }
+    
+    /*
+    th, td {
+      border: 1px black solid;
+      padding: 0;
+    }
+    */
   </style>
   
 </head>
@@ -136,7 +147,7 @@ If you need to sort your source playlists by BPM (Beats Per Minute), you can use
     <select id="category">
 
     </select>
-    <input type="text" id="playlist_uri" placeholder="Playlist URL or URI"/>
+    <input type="text" id="playlist_uri" placeholder="Playlist URL or URI" size="50" />
     <input type="button" value="Add tracks" onclick="addTracksFromPlaylist()"/>
   </div>
   <p>
