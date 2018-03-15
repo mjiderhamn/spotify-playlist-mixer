@@ -77,7 +77,7 @@
     function addTracksToListbox(listboxId, tracks) {
       console.log("Adding " + tracks.length + " track(s) to " + listboxId);
       var listbox = $('#' + listboxId);
-      $('option',  listboxId).remove();
+      $('option',  listbox).remove();
       $.each(tracks, function(index, track) {
         console.log("  Adding track to " + listboxId + ": " + track.id + " " + track.name); // JSON.stringify(track)
         listbox.append($("<option />")
