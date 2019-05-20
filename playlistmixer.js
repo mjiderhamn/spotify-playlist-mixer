@@ -105,7 +105,12 @@ Mixer.prototype.appendTracksFromPlaylist = function(tracks, userId, playlistId, 
       console.log("Playlist " + playlist.id + " @ " + playlist.href + " contains " + playlist.tracks.total + " tracks");
       // TODO Handle > 100 tracks playlist.tracks.href, playlist.tracks.limit, playlist.tracks.next, playlist.tracks.offset
       $(playlist.tracks.items).each(function(index, playlistTrack) {
-        tracks.push(playlistTrack.track);
+        if(playlistTrack.track.is_local) {
+          // console.log("Skipping local track " + playlistTrack.track.name);
+          console.log("Skipping local track " + JSON.stringify(playlistTrack.track));
+        }
+        else
+          tracks.push(playlistTrack.track);
       });
       console.log("Total tracks after: " + tracks.length);
       if(callback)
