@@ -194,7 +194,7 @@
   <!-- TODO Extract CSS -->
   <style>
     body {
-      /* background: #1ed760; /* Spotify green */
+      background: #1ed760; /* Spotify green */
       font-family: Circular,Helvetica,Arial,sans-serif;
     }
     
@@ -202,22 +202,21 @@
       width: 300px;
     }
     
-    /* TODO Responsive
-    {
-      box-sizing: border-box;
+    div.chartsAndStats {
+      background: white;
     }
-    */
-    
-    div.stats div {
-      /*align-content: center;*/
+
+    div.chartsAndStats div {
       text-align: center;
       padding: 20px;
       font-weight: bold;
     }
     
     /* break inheritance */
-    div.stats div div {
+    div.chartsAndStats div div {
+      font-size: xx-large;
       padding: 0;
+      clear: both;
     }
     
     /*
@@ -226,6 +225,28 @@
       padding: 0;
     }
     */
+
+    * {
+      box-sizing: border-box;
+    }
+    
+    div.chartsAndStats {
+      display: flex;
+      flex-wrap: wrap;
+    }
+    
+    .section {
+      /*width: 100%;*/
+      /*height: 300px;*/
+      /*display: flex;*/
+      justify-content: center;
+      align-items: center;
+    }
+    
+    div.chart {
+      /*font-weight: lighter;*/
+      font-size: x-small;
+    }
   </style>
   
 </head>
@@ -256,44 +277,47 @@ Using this playlist profile charter, you can create a graphical profile of your 
 
   </div>
   
-  <div class="stats">
-    <div>
+  <div class="chartsAndStats">
+  
+    <div class="section">
       <div id="totalTracks">?</div>
       Total no of tracks
     </div>
 
-    <div>
+    <div class="section">
       <div id="totalArtists">?</div>
       Total no of artists
     </div>
 
-    <div>
+    <div class="section">
       <div id="totalPlaytime">?</div>
       Total play time
     </div>
 
-    <div>
+    <div class="section">
       <div id="avgTemp">?</div>
       Average tempo (BPM)
     </div>
-  </div>
   
-  <div style="width: 400px; height: 400px">
+  <div class="chart" style="width: 400px; height: 400px">
     <canvas id="yearsChart" width="400" height="400"></canvas>
   </div>
   
-  <div style="width: 400px; height: 400px">
-    <canvas id="bpmPerStartTime" width="400" height="400"></canvas>
-  </div>
-  
-  <div style="width: 400px; height: 400px">
-    <canvas id="songsPerBpm" width="400" height="400"></canvas>
-  </div>
-  
-  <div style="width: 400px; height: 400px">
+  <div class="chart" style="width: 400px; height: 400px">
     <canvas id="acousticChart" width="400" height="400"></canvas>
   </div>
+
+  <div class="chart" style="width: 400px; height: 400px">
+    <canvas id="bpmPerStartTime" width="400" height="400"></canvas>
+    NOTE! Spotify BPM values may be inaccurate!
+  </div>
   
+  <div class="chart" style="width: 400px; height: 400px">
+    <canvas id="songsPerBpm" width="400" height="400"></canvas>
+    NOTE! Spotify BPM values may be inaccurate!
+  </div>
+  
+</div>
 </div>
 </body>
 </html>
