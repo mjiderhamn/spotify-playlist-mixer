@@ -57,6 +57,18 @@ class Charter {
     return output;
   }
   
+  getTracksPerYear() {
+    const output = new Map();
+    this.tracks.forEach(track => {
+          if(!output.has(track.albumReleaseYear)) {
+            output.set(track.albumReleaseYear, []);
+          }
+          output.get(track.albumReleaseYear).push(track.name);
+        }
+    );
+    return output;
+  }
+  
   /** Get time in milliseconds between start of playlist and start of track */
   getStartTimes() {
     const output = [0];
@@ -76,6 +88,18 @@ class Charter {
   getTempos() {
     return this.getAttribute("tempo");
     // return this.tracks.map(track => Math.round(track.tempo));
+  }
+  
+  getTracksPerTenthBpm() {
+    let output = new Map();
+    this.tracks.forEach(track => {
+        let tenthTemp = Math.floor(track.tempo / 10) * 10;
+      if(!output.has(tenthTemp)) {
+        output.set(tenthTemp, []);
+      }
+      output.get(tenthTemp).push(track.name);
+    });
+    return output;
   }
   
   getAcousticness() {

@@ -58,8 +58,9 @@
               // console.log("No of artists: " + charter.getAllArtists().size);
               $("#totalArtists").text(charter.getAllArtists().size);
               
-              let tracksPerYear = charter.getNoOfTracksPerYear();
-              console.log("No of tracks per year: " + JSON.stringify(Object.fromEntries(tracksPerYear), null, 2));
+              let tracksPerYear = charter.getTracksPerYear();
+              console.log("Tracks per year: " + JSON.stringify(Object.fromEntries(tracksPerYear), null, 2));
+              console.log("No of tracks per year: " + JSON.stringify(Object.fromEntries(charter.getNoOfTracksPerYear()), null, 2));
               
               let startTimes = charter.getStartTimes();
               // console.debug("Start times (ms): " + JSON.stringify(startTimes));
@@ -90,7 +91,7 @@
                       labels: yearsToChart,
                       datasets: [{
                           label: 'Songs per release year',
-                          data: yearsToChart.map(year => tracksPerYear.get(year)),
+                          data: yearsToChart.map(year => tracksPerYear.get(year).length),
                           // See https://stackoverflow.com/a/39884692
                           backgroundColor: palette('tol-rainbow', yearsToChart.length).map(hex => '#' + hex)
                           // borderWidth: 1
@@ -132,16 +133,10 @@
               });
               
               // Songs per tempo bars
-              let deciTempos = new Map();
-              tempos.forEach(tempo => {
-                let deciTempo = Math.floor(tempo / 10);
-                // let key = deciTempo + "0-" + deciTempo + "9";
-                let key = deciTempo * 10;
-                deciTempos.set(key, 1 + (deciTempos.has(key) ? deciTempos.get(key) : 0));
-              });
-              console.debug("deciTempos: " + JSON.stringify(Object.fromEntries(deciTempos.entries()), null, 2));
+              let tracksPerTenthBpm = charter.getTracksPerTenthBpm();
+              console.debug("tracksPerTenthBpm: " + JSON.stringify(Object.fromEntries(tracksPerTenthBpm.entries()), null, 2));
 
-              let temposToChart = Array.from(deciTempos.keys()).sort((a, b) => a - b);
+              let temposToChart = Array.from(tracksPerTenthBpm.keys()).sort((a, b) => a - b);
               // console.debug("temposToChart: " + temposToChart);
               var songsPerBpmChart = new Chart($("#songsPerBpm"), {
                   type: 'bar',
@@ -149,7 +144,7 @@
                       labels: temposToChart.map(tempo => tempo + "-" + tempo/10 + "9"),
                       datasets: [{
                           label: 'Songs per BPM',
-                          data: temposToChart.map(tempo => deciTempos.get(tempo)),
+                          data: temposToChart.map(tempo => tracksPerTenthBpm.get(tempo).length),
                           // See https://stackoverflow.com/a/39884692
                           backgroundColor: palette('tol-rainbow', temposToChart.length).map(hex => '#' + hex)
                           // borderWidth: 1
