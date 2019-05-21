@@ -1,3 +1,5 @@
+// TODO Extract common file without Mixer
+
 var SPOTIFY_CLIENT_ID = "9f2f7495b9d74d8b805c3ce656967c2e";
 
 var Tracks = {
@@ -13,6 +15,27 @@ var TRACKS_PER_BATCH = 50;
 
 var accessToken = null;
 var spotifyApi = new SpotifyWebApi();
+
+/** To be called from $(document).ready() */
+function initSpotify(callback) {
+  var params = parseParams();
+  // TODO handle 'error'
+  if('access_token' in params) {
+    accessToken = params['access_token'];
+    console.log("accessToken: " + accessToken);
+    spotifyApi.setAccessToken(accessToken);
+    $('#login').hide();
+    
+    if(callback) {
+      callback.call();
+    }
+  }
+  else {
+    $('#login').show();
+    $('#loggedIn').hide();
+  }
+  
+}
 
 function parseParams() {
   var all = document.location.hash.replace(/#/g, '').split('&');
@@ -33,6 +56,41 @@ function login() {
       '&response_type=token' +
       '&scope=' + encodeURIComponent(scopes) +
       '&redirect_uri=' + encodeURIComponent(document.location);
+}
+
+function processPlaylistTracks(userId, playlistId, processTrack, postLoopCallback) {
+  spotifyApi.getPlaylist(userId, playlistId, null, function(xhr, playlist) {
+    if(xhr) {
+      var error = JSON.parse(xhr.response).error;
+      alert(error.status + ": " + error.message);
+      console.error(xhr.responseText);
+    }
+    else if(playlist) {
+      // console.log("Total tracks before: " + tracks.length);
+      console.log("Playlist " + playlist.id + " @ " + playlist.href + " contains " + playlist.tracks.total + " tracks");
+      // TODO Handle > 100 tracks playlist.tracks.href, playlist.tracks.limit, playlist.tracks.next, playlist.tracks.offset
+      $(playlist.tracks.items).each(function(index, playlistTrack) {
+        if(playlistTrack.track.is_local) {
+          // console.log("Skipping local track " + playlistTrack.track.name);
+          console.log("Skipping local track " + JSON.stringify(playlistTrack.track, null, 2));
+        }
+        else {
+          processTrack(playlistTrack);
+        }
+      });
+      if(postLoopCallback)
+        postLoopCallback.call();
+    }
+    else
+      alert("Unknown error"); // TODO
+  });
+}
+
+function formatMilliseconds(ms) {
+  var duration = moment.duration(ms);
+  return duration.hours() + " h " + duration.minutes() + " m " + duration.seconds() + " s";
+  // duration.humanize(); ?
+  // duration.as("hh:mm:ss"); ?
 }
 
 // ===========================================================================0
@@ -94,31 +152,15 @@ Mixer.prototype.getTotalTime = function(tracks) {
 };
 
 Mixer.prototype.appendTracksFromPlaylist = function(tracks, userId, playlistId, callback) {
-  spotifyApi.getPlaylist(userId, playlistId, null, function(xhr, playlist) {
-    if(xhr) {
-      var error = JSON.parse(xhr.response).error;
-      alert(error.status + ": " + error.message);
-      console.error(xhr.responseText);
-    }
-    else if(playlist) {
-      // console.log("Total tracks before: " + tracks.length);
-      console.log("Playlist " + playlist.id + " @ " + playlist.href + " contains " + playlist.tracks.total + " tracks");
-      // TODO Handle > 100 tracks playlist.tracks.href, playlist.tracks.limit, playlist.tracks.next, playlist.tracks.offset
-      $(playlist.tracks.items).each(function(index, playlistTrack) {
-        if(playlistTrack.track.is_local) {
-          // console.log("Skipping local track " + playlistTrack.track.name);
-          console.log("Skipping local track " + JSON.stringify(playlistTrack.track));
-        }
-        else
-          tracks.push(playlistTrack.track);
+  processPlaylistTracks(userId, playlistId,
+      function(playlistTrack) { // Do with each track
+        tracks.push(playlistTrack.track);
+      },
+      function() { // Do after tracks processed without errors
+        console.log("Total tracks after: " + tracks.length);
+        if(callback)
+          callback.call();
       });
-      console.log("Total tracks after: " + tracks.length);
-      if(callback)
-        callback.call();
-    }
-    else
-      alert("Unknown error"); // TODO
-  });
 };
 
 Mixer.prototype.addTrackBetweenCategories = function(trackIdOrUrl, callback) {
@@ -229,7 +271,7 @@ Mixer.prototype.getTrack = function(idOrUrlOrUri, callback) {
   }
   else {
     this.trackCache[trackId] = spotifyApi.getTrack(trackId, function (xhr, track) {
-      console.log("Track fetched: " + JSON.stringify(track));
+      console.log("Track fetched: " + JSON.stringify(track, null, 2));
       self.trackCache[trackId] = track;
       callback(track);
     });

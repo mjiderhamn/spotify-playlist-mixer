@@ -24,24 +24,14 @@
     var mixer = new Mixer();
 
     $(document).ready(function () {
-      var params = parseParams();
-      // TODO handle 'error'
-      if('access_token' in params) {
-        accessToken = params['access_token'];
-        console.log("accessToken: " + accessToken);
-        spotifyApi.setAccessToken(accessToken);
-        $('#login').hide();
+      initSpotify(function () {
         initializeCategories();
 
         // Some defaults
         mixer.addTrackBetweenCycles(Tracks.SILENCE_17s, function () {
           addTracksToListbox("betweenCycles", mixer.tracksBetweenCycles);
         });
-      }
-      else {
-        $('#login').show();
-        $('#loggedIn').hide();
-      }
+      });
     });
 
     function initializeCategories() {
@@ -110,13 +100,6 @@
       $('#foxHeading').text("Fox (" + mixer.getTracksOfCategory("Fox").length + " tracks, " + formatMilliseconds(totalFoxTime) + ")")
     }
     
-    function formatMilliseconds(ms) {
-      var duration = moment.duration(ms);
-      return duration.hours() + " h " + duration.minutes() + " m " + duration.seconds() + " s";
-      // duration.humanize(); ?
-      // duration.as("hh:mm:ss"); ?
-    }
-
     function updateBetweenCategoriesListbox() {
       addTracksToListbox("betweenCategories", mixer.tracksBetweenCategories);
     }
@@ -317,8 +300,5 @@ If you need to sort your source playlists by BPM (Beats Per Minute), you can use
     Name of new playlist: <input id="playlist_name" placeholder="Name of new playlist" size="100"/>
   </p>
 </div>
-<hr />
-<p>
-</p>
 </body>
 </html>

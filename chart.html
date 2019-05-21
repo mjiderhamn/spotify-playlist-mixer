@@ -1,0 +1,304 @@
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Documentation https://doxdox.org/jmperez/spotify-web-api-js -->
+  <script type="text/javascript" src="https://cdn.rawgit.com/JMPerez/spotify-web-api-js/53f7cec142f06a71f7a9ca55eb572ed1a67b1566/src/spotify-web-api.js"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.21.0/moment.js" integrity="sha256-9wM2SPsbZp8aQ0KHzSeg+KsAYGtc7GRTombqhhXvLSg=" crossorigin="anonymous"></script>
+  <!-- TODO Remove once common extracted -->
+  <script type="text/javascript" src="playlistmixer.js"></script>
+  <script type="text/javascript" src="playlistchart.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js"></script>
+  <!-- See http://google.github.io/palette.js/ -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/google-palette@1.1.0/palette.min.js"></script>
+  <title>Spotify Playlist Profile Chart</title>
+
+  <script type="text/javascript">
+
+    $(document).ready(function () {
+      initSpotify();
+    });
+
+    function chartPlaylist() {
+      var urlOrUri = $('#chart_playlist_uri').val();
+      
+      var userId = getUserFromPlaylistUrl(urlOrUri);
+      var playlistId = getPlaylistFromPlaylistUrl(urlOrUri);
+      
+      let charter = new Charter();
+
+      processPlaylistTracks(userId, playlistId,
+          function(playlistTrack) { // Do with each track
+            charter.addTrack(new TrackDetails(playlistTrack.track))
+          },
+          function() { // Do after tracks processed without errors
+            console.log("Done fetching playlist");
+            
+            /* For now, genres seems to be available on the artist only
+            spotifyApi.getAlbums(charter.getAlbumIds(), { }, function(xhr, album) {
+              if(xhr) {
+                var error = JSON.parse(xhr.response).error;
+                alert(error.status + ": " + error.message);
+                console.error(xhr.responseText);
+              }
+              else if(album) {
+                console.log("Album release " + album.release_date + " (" + album.release_date_precision + ")");
+                console.log("Genres " + JSON.stringify(album.genres, null, 2));
+              }
+            });
+            */
+
+            charter.fetchFeatures(function () {
+              // console.debug(JSON.stringify(charter.tracks, null, 2));
+
+              // console.log("Total no of tracks: " + charter.tracks.length);
+              $("#totalTracks").text(charter.tracks.length);
+              // console.log("Total time of tracks: " + formatMilliseconds(charter.tracks.map(track => track.duration_ms).reduce((accumulator, currentValue) => accumulator + currentValue)));
+              $("#totalPlaytime").text(formatMilliseconds(charter.tracks.map(track => track.duration_ms).reduce((accumulator, currentValue) => accumulator + currentValue)));
+              // console.log("No of artists: " + charter.getAllArtists().size);
+              $("#totalArtists").text(charter.getAllArtists().size);
+              
+              let tracksPerYear = charter.getNoOfTracksPerYear();
+              console.log("No of tracks per year: " + JSON.stringify(Object.fromEntries(tracksPerYear), null, 2));
+              
+              let startTimes = charter.getStartTimes();
+              // console.debug("Start times (ms): " + JSON.stringify(startTimes));
+              console.debug("Start times: " + JSON.stringify(startTimes.map(time => formatMilliseconds(time)), null, 2));
+              
+              let tempos = charter.getTempos();
+              console.debug("Tempos: " + JSON.stringify(tempos, null, 2));
+              let avgTempo = tempos.reduce((accumulator, currentValue) => accumulator + currentValue) / tempos.length;
+              // console.debug("Average tempo: " + avgTempo);
+              $("#avgTemp").text(Math.round(avgTempo));
+              
+              // Plot?
+              // console.debug("acousticness: " + charter.getAttribute("acousticness"));
+              console.debug("danceability: " + charter.getAttribute("danceability"));
+              console.debug("energy: " + charter.getAttribute("energy"));
+              // console.debug("instrumentalness: " + charter.getAttribute("instrumentalness"));
+              // console.debug("key: " + charter.getAttribute("key"));
+              // console.debug("liveness: " + charter.getAttribute("liveness"));
+              console.debug("loudness: " + charter.getAttribute("loudness"));
+              console.debug("valence: " + charter.getAttribute("valence"));
+
+
+              // Chart no of songs per year
+              let yearsToChart = Array.from(tracksPerYear.keys()).sort();
+              var yearsChart = new Chart($("#yearsChart"), {
+                  type: 'bar',
+                  data: {
+                      labels: yearsToChart,
+                      datasets: [{
+                          label: 'Songs per release year',
+                          data: yearsToChart.map(year => tracksPerYear.get(year)),
+                          // See https://stackoverflow.com/a/39884692
+                          backgroundColor: palette('tol-rainbow', yearsToChart.length).map(hex => '#' + hex)
+                          // borderWidth: 1
+                      }]
+                  },
+                  options: {
+                      scales: {
+                          yAxes: [{
+                              ticks: {
+                                  beginAtZero: true
+                              }
+                          }]
+                      }
+                  }
+              });
+
+              // BPM per start time line
+              var bpmPerStartTime = new Chart($("#bpmPerStartTime"), {
+                  type: 'line',
+                  data: {
+                      labels: startTimes.map(time => formatMilliseconds(time)),
+                      datasets: [{
+                          label: 'BPM',
+                          data: tempos.map(tempo => Math.round(tempo)),
+                          borderColor: palette('tol-rainbow', 1).map(hex => '#' + hex),
+                          backgroundColor: 'rgba(0, 0, 0, 0.0)',
+                          borderWidth: 1
+                      }]
+                  },
+                  options: {
+                      scales: {
+                          yAxes: [{
+                              ticks: {
+                                  beginAtZero: true
+                              }
+                          }]
+                      }
+                  }
+              });
+              
+              // Songs per tempo bars
+              let deciTempos = new Map();
+              tempos.forEach(tempo => {
+                let deciTempo = Math.floor(tempo / 10);
+                // let key = deciTempo + "0-" + deciTempo + "9";
+                let key = deciTempo * 10;
+                deciTempos.set(key, 1 + (deciTempos.has(key) ? deciTempos.get(key) : 0));
+              });
+              console.debug("deciTempos: " + JSON.stringify(Object.fromEntries(deciTempos.entries()), null, 2));
+
+              let temposToChart = Array.from(deciTempos.keys()).sort((a, b) => a - b);
+              // console.debug("temposToChart: " + temposToChart);
+              var songsPerBpmChart = new Chart($("#songsPerBpm"), {
+                  type: 'bar',
+                  data: {
+                      labels: temposToChart.map(tempo => tempo + "-" + tempo/10 + "9"),
+                      datasets: [{
+                          label: 'Songs per BPM',
+                          data: temposToChart.map(tempo => deciTempos.get(tempo)),
+                          // See https://stackoverflow.com/a/39884692
+                          backgroundColor: palette('tol-rainbow', temposToChart.length).map(hex => '#' + hex)
+                          // borderWidth: 1
+                      }]
+                  },
+                  options: {
+                      scales: {
+                          yAxes: [{
+                              ticks: {
+                                  beginAtZero: true
+                              }
+                          }]
+                      }
+                  }
+              });
+              
+              // Donut with acoustic
+              let acousticnesses = charter.getAcousticness();
+              let acoustic = new Map();
+              acousticnesses.forEach(acousticness => {
+                let key = acousticness > 0.7 ? "Acoustic" : // TODO Threshold. Make constant
+                    acousticness < 0.3 ? "Non acoustic" : // TODO Threshold. Make constant
+                    "Undetermined";
+                    
+                acoustic.set(key, 1 + (acoustic.has(key) ? acoustic.get(key) : 0));
+              });
+              
+              var acousticChart = new Chart($("#acousticChart"), {
+                  type: 'doughnut',
+                  data: {
+                      labels: Array.from(acoustic.keys()),
+                      datasets: [{
+                          label: 'Acoustic',
+                          data: Array.from(acoustic.values()),
+                          // See https://stackoverflow.com/a/39884692
+                          backgroundColor: palette('tol-rainbow', acoustic.size).map(hex => '#' + hex)
+                          // borderWidth: 1
+                      }]
+                  }
+              });
+            });
+          });
+    }
+    
+  </script>
+  
+  <!-- TODO Extract CSS -->
+  <style>
+    body {
+      /* background: #1ed760; /* Spotify green */
+      font-family: Circular,Helvetica,Arial,sans-serif;
+    }
+    
+    select {
+      width: 300px;
+    }
+    
+    /* TODO Responsive
+    {
+      box-sizing: border-box;
+    }
+    */
+    
+    div.stats div {
+      /*align-content: center;*/
+      text-align: center;
+      padding: 20px;
+      font-weight: bold;
+    }
+    
+    /* break inheritance */
+    div.stats div div {
+      padding: 0;
+    }
+    
+    /*
+    th, td {
+      border: 1px black solid;
+      padding: 0;
+    }
+    */
+  </style>
+  
+</head>
+<body>
+
+<a href="https://github.com/mjiderhamn/spotify-playlist-mixer/">
+  <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub">
+</a>
+
+<h1>Spotify Playlist Profile chart</h1>
+
+Using this playlist profile charter, you can create a graphical profile of your Spotify playlist.
+
+<p id="login">
+  <input type="button" value="Log in" onclick="login()"/>
+</p>
+<div id="loggedIn">
+  <div>
+    <h2>Playlist</h2>
+    <!--
+    Add playlists of different categories that you want mixed.
+    You can see the tracks added into each category below.
+    <br />
+    -->
+    
+    <input type="text" id="chart_playlist_uri" placeholder="Playlist URL or URI" size="50" />
+    <input type="button" value="Chart" onclick="chartPlaylist()"/>
+
+  </div>
+  
+  <div class="stats">
+    <div>
+      <div id="totalTracks">?</div>
+      Total no of tracks
+    </div>
+
+    <div>
+      <div id="totalArtists">?</div>
+      Total no of artists
+    </div>
+
+    <div>
+      <div id="totalPlaytime">?</div>
+      Total play time
+    </div>
+
+    <div>
+      <div id="avgTemp">?</div>
+      Average tempo (BPM)
+    </div>
+  </div>
+  
+  <div style="width: 400px; height: 400px">
+    <canvas id="yearsChart" width="400" height="400"></canvas>
+  </div>
+  
+  <div style="width: 400px; height: 400px">
+    <canvas id="bpmPerStartTime" width="400" height="400"></canvas>
+  </div>
+  
+  <div style="width: 400px; height: 400px">
+    <canvas id="songsPerBpm" width="400" height="400"></canvas>
+  </div>
+  
+  <div style="width: 400px; height: 400px">
+    <canvas id="acousticChart" width="400" height="400"></canvas>
+  </div>
+  
+</div>
+</body>
+</html>
