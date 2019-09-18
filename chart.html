@@ -109,12 +109,13 @@
               });
 
               // BPM per start time line
+              // TODO https://www.chartjs.org/docs/latest/axes/cartesian/time.html
               var bpmPerStartTime = new Chart($("#bpmPerStartTime"), {
                   type: 'line',
                   data: {
                       labels: startTimes.map(time => formatMilliseconds(time)),
                       datasets: [{
-                          label: 'BPM',
+                          label: 'BPM at playtime',
                           data: tempos.map(tempo => Math.round(tempo)),
                           borderColor: palette('tol-rainbow', 1).map(hex => '#' + hex),
                           backgroundColor: 'rgba(0, 0, 0, 0.0)',
@@ -125,7 +126,8 @@
                       scales: {
                           yAxes: [{
                               ticks: {
-                                  beginAtZero: true
+                                beginAtZero: true,
+                                suggestedMax: 180
                               }
                           }]
                       }
@@ -135,8 +137,15 @@
               // Songs per tempo bars
               let tracksPerTenthBpm = charter.getTracksPerTenthBpm();
               console.debug("tracksPerTenthBpm: " + JSON.stringify(Object.fromEntries(tracksPerTenthBpm.entries()), null, 2));
-
+              
               let temposToChart = Array.from(tracksPerTenthBpm.keys()).sort((a, b) => a - b);
+              for(let i = temposToChart[0]; i < temposToChart[temposToChart.length - 1]; i += 10) {
+                if(! tracksPerTenthBpm.has(i)) {
+                  tracksPerTenthBpm.set(i, []);
+                }
+              }
+
+              temposToChart = Array.from(tracksPerTenthBpm.keys()).sort((a, b) => a - b);
               // console.debug("temposToChart: " + temposToChart);
               var songsPerBpmChart = new Chart($("#songsPerBpm"), {
                   type: 'bar',
@@ -154,7 +163,8 @@
                       scales: {
                           yAxes: [{
                               ticks: {
-                                  beginAtZero: true
+                                beginAtZero: true,
+                                stepSize: 1.0
                               }
                           }]
                       }
@@ -171,7 +181,9 @@
                     
                 acoustic.set(key, 1 + (acoustic.has(key) ? acoustic.get(key) : 0));
               });
-              
+              // console.debug(JSON.stringify(Object.fromEntries(acoustic.entries()), null, 2));
+
+              let acousticLabels = Array.from(acoustic.keys()).sort();
               var acousticChart = new Chart($("#acousticChart"), {
                   type: 'doughnut',
                   data: {
@@ -260,24 +272,24 @@
 
 Using this playlist profile charter, you can create a graphical profile of your Spotify playlist.
 
+<!-- TODO Link to http://plotify.herokuapp.com -->
+
 <p id="login">
   <input type="button" value="Log in" onclick="login()"/>
 </p>
 <div id="loggedIn">
   <div>
     <h2>Playlist</h2>
-    <!--
-    Add playlists of different categories that you want mixed.
-    You can see the tracks added into each category below.
-    <br />
-    -->
-    
-    <input type="text" id="chart_playlist_uri" placeholder="Playlist URL or URI" size="50" />
+    <!-- TODO Remove default value -->
+
+    <input type="text" id="chart_playlist_uri" placeholder="Playlist URL or URI" size="50" value="https://open.spotify.com/user/mattiasj78/playlist/5TmZ2aCU3ONr70GZZzbIeD?si=vubvGwzNSU26_vE-rRIOUQ"/>
     <input type="button" value="Chart" onclick="chartPlaylist()"/>
 
   </div>
   
   <div class="chartsAndStats">
+    
+  <!-- TODO: Playlist name -->
   
     <div class="section">
       <div id="totalTracks">?</div>
