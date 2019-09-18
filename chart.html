@@ -172,14 +172,17 @@
               });
               
               // Donut with acoustic
-              let acousticnesses = charter.getAcousticness();
+              // let acousticnesses = charter.getAcousticness();
               let acoustic = new Map();
-              acousticnesses.forEach(acousticness => {
-                let key = acousticness > 0.7 ? "Acoustic" : // TODO Threshold. Make constant
-                    acousticness < 0.3 ? "Non acoustic" : // TODO Threshold. Make constant
+              charter.tracks.forEach(track => {
+                let key = track.acousticness > 0.7 ? "Acoustic" : // TODO 0.65? Make constant
+                    track.acousticness < 0.5 ? "Non acoustic" : // TODO Threshold. Make constant
                     "Undetermined";
-                    
-                acoustic.set(key, 1 + (acoustic.has(key) ? acoustic.get(key) : 0));
+                if(! acoustic.has(key)) {
+                  acoustic.set(key, []);
+                }
+                
+                acoustic.get(key).push(track.name);
               });
               // console.debug(JSON.stringify(Object.fromEntries(acoustic.entries()), null, 2));
 
@@ -187,12 +190,12 @@
               var acousticChart = new Chart($("#acousticChart"), {
                   type: 'doughnut',
                   data: {
-                      labels: Array.from(acoustic.keys()),
+                      labels: acousticLabels,
                       datasets: [{
                           label: 'Acoustic',
-                          data: Array.from(acoustic.values()),
+                          data: acousticLabels.map(key => acoustic.get(key).length),
                           // See https://stackoverflow.com/a/39884692
-                          backgroundColor: palette('tol-rainbow', acoustic.size).map(hex => '#' + hex)
+                          backgroundColor: palette('tol-rainbow', acoustic.size).map(hex => '#' + hex) // TODO Fixed colours
                           // borderWidth: 1
                       }]
                   }
