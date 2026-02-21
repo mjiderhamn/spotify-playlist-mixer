@@ -18,44 +18,80 @@ var spotifyApi = new SpotifyWebApi();
 
 /** To be called from $(document).ready() */
 function initSpotify(callback) {
-  var params = parseParams();
-  // TODO handle 'error'
-  if('access_token' in params) {
-    accessToken = params['access_token'];
-    console.log("accessToken: " + accessToken);
-    spotifyApi.setAccessToken(accessToken);
-    $('#login').hide();
-    
-    if(callback) {
-      callback.call();
-    }
+  var urlParams = new URLSearchParams(window.location.search);
+  var code = urlParams.get('code');
+
+  if (code) {
+    // We've been redirected back from Spotify with an auth code — exchange it for a token
+    var codeVerifier = sessionStorage.getItem('code_verifier');
+    sessionStorage.removeItem('code_verifier');
+    var redirectUri = location.href.split('?')[0];
+
+    fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: redirectUri,
+        client_id: SPOTIFY_CLIENT_ID,
+        code_verifier: codeVerifier
+      })
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+      accessToken = data.access_token;
+      console.log("accessToken: " + accessToken);
+      spotifyApi.setAccessToken(accessToken);
+      // Clean the code from the URL so a page refresh doesn't re-submit it
+      window.history.replaceState({}, '', location.pathname);
+      $('#login').hide();
+
+      if(callback) {
+        callback.call();
+      }
+    });
   }
   else {
     $('#login').show();
     $('#loggedIn').hide();
   }
-  
+
 }
 
-function parseParams() {
-  var all = document.location.hash.replace(/#/g, '').split('&');
-  var params = {};
-  for(var i = 0; i < all.length; i++) {
-    var keyValue = all[i].split('=');
-    var key = keyValue[0];
-    var value = keyValue[1];
-    params[key] = value;
-    // alert(key + " = " + value);
-  }
-  return params;
+function generateRandomString(length) {
+  var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var values = crypto.getRandomValues(new Uint8Array(length));
+  return Array.from(values).map(function(x) { return possible[x % possible.length]; }).join('');
+}
+
+function generateCodeChallenge(codeVerifier) {
+  var encoder = new TextEncoder();
+  var data = encoder.encode(codeVerifier);
+  return crypto.subtle.digest('SHA-256', data).then(function(digest) {
+    return btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
+      .replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  });
 }
 
 function login() {
   var scopes = 'playlist-read-private playlist-modify-private playlist-modify-public playlist-read-collaborative';
-  document.location = 'https://accounts.spotify.com/authorize?client_id=' + SPOTIFY_CLIENT_ID +
-      '&response_type=token' +
-      '&scope=' + encodeURIComponent(scopes) +
-      '&redirect_uri=' + encodeURIComponent(document.location);
+  var codeVerifier = generateRandomString(64);
+
+  generateCodeChallenge(codeVerifier).then(function(codeChallenge) {
+    sessionStorage.setItem('code_verifier', codeVerifier);
+
+    var params = new URLSearchParams({
+      client_id: SPOTIFY_CLIENT_ID,
+      response_type: 'code',
+      redirect_uri: location.href.split('?')[0],
+      scope: scopes,
+      code_challenge_method: 'S256',
+      code_challenge: codeChallenge
+    });
+
+    document.location = 'https://accounts.spotify.com/authorize?' + params.toString();
+  });
 }
 
 function processPlaylistTracks(userId, playlistId, processTrack, postLoopCallback) {
