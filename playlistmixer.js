@@ -104,22 +104,39 @@ function processPlaylistTracks(userId, playlistId, processTrack, postLoopCallbac
     else if(playlist) {
       // console.log("Total tracks before: " + tracks.length);
       console.log("Playlist " + playlist.id + " @ " + playlist.href + " contains " + playlist.tracks.total + " tracks");
-      // TODO Handle > 100 tracks playlist.tracks.href, playlist.tracks.limit, playlist.tracks.next, playlist.tracks.offset
-      $(playlist.tracks.items).each(function(index, playlistTrack) {
-        if(playlistTrack.track.is_local) {
-          // console.log("Skipping local track " + playlistTrack.track.name);
-          console.log("Skipping local track " + JSON.stringify(playlistTrack.track, null, 2));
-        }
-        else {
-          processTrack(playlistTrack);
-        }
-      });
-      if(postLoopCallback)
-        postLoopCallback.call();
-    }
-    else
+      processTrackPage(playlist.tracks, processTrack, postLoopCallback);
+    } else
       alert("Unknown error"); // TODO
   });
+}
+
+function processTrackPage(tracksPage, processTrack, postLoopCallback) {
+  $(tracksPage.items).each(function(index, playlistTrack) {
+    if(playlistTrack.track.is_local) {
+      console.log("Skipping local track " + JSON.stringify(playlistTrack.track, null, 2));
+    }
+    else {
+      processTrack(playlistTrack);
+    }
+  });
+
+  if(tracksPage.next) {
+    spotifyApi.getGeneric(tracksPage.next, function(xhr, nextPage) {
+      if(xhr) {
+        var error = JSON.parse(xhr.response).error;
+        alert(error.status + ": " + error.message);
+        console.error(xhr.responseText);
+      }
+      else {
+        processTrackPage(nextPage, processTrack, postLoopCallback);
+      }
+    });
+  }
+  else {
+    console.log("That's all folks"); // TODO
+    if(postLoopCallback)
+      postLoopCallback.call();
+  }
 }
 
 function formatMilliseconds(ms) {
